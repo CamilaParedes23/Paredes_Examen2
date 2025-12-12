@@ -1,0 +1,108 @@
+# Archivo de Pruebas HTTP para PurchaseOrder API
+# Usa este archivo con extensiones como REST Client en VSCode o Postman
+
+### Variables
+@baseUrl = http://localhost:8080/api/v1/purchase-orders
+
+### 1. Health Check
+GET {{baseUrl}}/health
+
+### 2. Generar número de orden
+GET {{baseUrl}}/generate-order-number
+
+### 3. Crear una nueva orden de compra
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "supplierName": "ACME Tools",
+  "totalAmount": 1250.50,
+  "currency": "USD",
+  "expectedDeliveryDate": "2025-02-15"
+}
+
+### 4. Crear otra orden para pruebas
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "supplierName": "Tech Solutions Inc",
+  "totalAmount": 2300.75,
+  "currency": "EUR",
+  "expectedDeliveryDate": "2025-03-01"
+}
+
+### 5. Obtener todas las órdenes
+GET {{baseUrl}}
+
+### 6. Búsqueda por texto (case-insensitive)
+GET {{baseUrl}}?q=acme
+
+### 7. Filtrar por estado
+GET {{baseUrl}}?status=APPROVED
+
+### 8. Filtrar por moneda
+GET {{baseUrl}}?currency=USD
+
+### 9. Filtrar por rango de montos
+GET {{baseUrl}}?minTotal=1000&maxTotal=5000
+
+### 10. Filtrar por rango de fechas
+GET {{baseUrl}}?from=2025-01-01T00:00:00&to=2025-12-31T23:59:59
+
+### 11. Combinar múltiples filtros
+GET {{baseUrl}}?q=acme&status=DRAFT&currency=USD&minTotal=500
+
+### 12. Obtener orden específica (reemplaza {id} por un ID real)
+GET {{baseUrl}}/1
+
+### 13. Actualizar una orden (reemplaza {id} por un ID real)
+PUT {{baseUrl}}/1
+Content-Type: application/json
+
+{
+  "orderNumber": "PO-2025-000001",
+  "supplierName": "ACME Tools Updated",
+  "status": "APPROVED",
+  "totalAmount": 1350.75,
+  "currency": "USD",
+  "expectedDeliveryDate": "2025-02-20"
+}
+
+### 14. Eliminar una orden (reemplaza {id} por un ID real)
+DELETE {{baseUrl}}/7
+
+### 15. Casos de error - Estado inválido
+GET {{baseUrl}}?status=INVALID_STATUS
+
+### 16. Casos de error - Moneda inválida
+GET {{baseUrl}}?currency=INVALID_CURRENCY
+
+### 17. Casos de error - Rango de fechas inválido (from > to)
+GET {{baseUrl}}?from=2025-12-31T23:59:59&to=2025-01-01T00:00:00
+
+### 18. Casos de error - Monto negativo
+GET {{baseUrl}}?minTotal=-100
+
+### 19. Crear orden con validaciones fallidas
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "supplierName": "",
+  "totalAmount": -100,
+  "currency": "INVALID",
+  "expectedDeliveryDate": "2020-01-01"
+}
+
+### 20. Crear orden con orderNumber duplicado
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "orderNumber": "PO-2025-000001",
+  "supplierName": "Duplicate Test",
+  "totalAmount": 500.00,
+  "currency": "USD",
+  "expectedDeliveryDate": "2025-02-15"
+}

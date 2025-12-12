@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  purchaseorder-api:
+    build: .
+    container_name: purchaseorder-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/purchase-orders/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - purchaseorder-network
+
+networks:
+  purchaseorder-network:
+    driver: bridge
+
+# Para usar imagen desde Docker Hub (comentado por ahora)
+# services:
+#   purchaseorder-api:
+#     image: tuusuario/purchaseorder-api:latest
+#     container_name: purchaseorder-api
+#     ports:
+#       - "8080:8080"
+#     environment:
+#       - SPRING_PROFILES_ACTIVE=docker
+#     restart: unless-stopped

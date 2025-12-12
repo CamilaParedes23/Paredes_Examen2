@@ -1,0 +1,46 @@
+# Excluir archivos innecesarios del contexto de Docker
+
+# Directorios de build
+target/
+*.class
+*.jar
+*.war
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentación (opcional, se puede incluir)
+*.md
+LICENSE
+HELP.md
+
+# Scripts locales
+start-app.ps1
+api-tests.http
+
+# Node modules si los hay
+node_modules/
+
+# Archivos de Maven locales
+.mvn/wrapper/maven-wrapper.jar
