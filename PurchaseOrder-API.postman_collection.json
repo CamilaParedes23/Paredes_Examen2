@@ -1,0 +1,289 @@
+
+  "info": {
+    "name": "PurchaseOrder API",
+    "description": "Colección completa para probar la API de Órdenes de Compra",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1/purchase-orders",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "2. Generar Número de Orden",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/generate-order-number",
+          "host": ["{{baseUrl}}"],
+          "path": ["generate-order-number"]
+        }
+      }
+    },
+    {
+      "name": "3. Crear Nueva Orden",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"supplierName\": \"ACME Tools\",\n  \"totalAmount\": 1250.50,\n  \"currency\": \"USD\",\n  \"expectedDeliveryDate\": \"2025-02-15\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": ["{{baseUrl}}"]
+        }
+      }
+    },
+    {
+      "name": "4. Obtener Todas las Órdenes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": ["{{baseUrl}}"]
+        }
+      }
+    },
+    {
+      "name": "5. Búsqueda por Texto (q=acme)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?q=acme",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            {
+              "key": "q",
+              "value": "acme"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Filtrar por Estado (APPROVED)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?status=APPROVED",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            {
+              "key": "status",
+              "value": "APPROVED"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Filtrar por Moneda (USD)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?currency=USD",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            {
+              "key": "currency",
+              "value": "USD"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. Filtrar por Rango de Montos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?minTotal=1000&maxTotal=5000",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            {
+              "key": "minTotal",
+              "value": "1000"
+            },
+            {
+              "key": "maxTotal",
+              "value": "5000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "9. Filtrar por Rango de Fechas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?from=2025-01-01T00:00:00&to=2025-12-31T23:59:59",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            {
+              "key": "from",
+              "value": "2025-01-01T00:00:00"
+            },
+            {
+              "key": "to",
+              "value": "2025-12-31T23:59:59"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "10. Filtros Combinados",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?q=acme&status=APPROVED&currency=USD&minTotal=100",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            {
+              "key": "q",
+              "value": "acme"
+            },
+            {
+              "key": "status",
+              "value": "APPROVED"
+            },
+            {
+              "key": "currency",
+              "value": "USD"
+            },
+            {
+              "key": "minTotal",
+              "value": "100"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "11. Obtener Orden por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["1"]
+        }
+      }
+    },
+    {
+      "name": "12. Actualizar Orden Existente",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderNumber\": \"PO-2025-000001\",\n  \"supplierName\": \"ACME Tools Updated\",\n  \"status\": \"APPROVED\",\n  \"totalAmount\": 1500.75,\n  \"currency\": \"USD\",\n  \"expectedDeliveryDate\": \"2025-03-15\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["1"]
+        }
+      }
+    },
+    {
+      "name": "13. Eliminar Orden",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/5",
+          "host": ["{{baseUrl}}"],
+          "path": ["5"]
+        }
+      }
+    },
+    {
+      "name": "14. Error - Monto Inválido",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"supplierName\": \"Test Supplier\",\n  \"totalAmount\": -100,\n  \"currency\": \"USD\",\n  \"expectedDeliveryDate\": \"2025-02-15\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": ["{{baseUrl}}"]
+        }
+      }
+    },
+    {
+      "name": "15. Error - Estado Inválido",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?status=INVALID_STATUS",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            {
+              "key": "status",
+              "value": "INVALID_STATUS"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "16. Error - Orden No Encontrada",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/999",
+          "host": ["{{baseUrl}}"],
+          "path": ["999"]
+        }
+      }
+    }
+  ]
+}
+

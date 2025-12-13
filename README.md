@@ -1,283 +1,243 @@
-# Sistema de Gestión de Órdenes de Compra (PurchaseOrder API)
+# Purchase Order API
 
-## Descripción
+API REST para la gestión de órdenes de compra desarrollada con **Spring Boot 3** y **Java 17**, implementando filtros avanzados y cumpliendo con los principios REST y buenas prácticas de desarrollo.
 
-API REST para la gestión de órdenes de compra con funcionalidades completas de CRUD, filtros avanzados y validaciones robustas desarrollada con Spring Boot.
+## Características Implementadas
 
-## Características Principales
+- **CRUD completo** para órdenes de compra
+- **6 filtros avanzados** obligatorios implementados (búsqueda, estado, moneda, montos, fechas)
+- **Validaciones robustas** con Bean Validation y validaciones de negocio
+- **Manejo global de errores** con respuestas JSON estructuradas y códigos HTTP apropiados
+- **Arquitectura en capas** (Controller, Service, Repository)
+- **Base de datos MySQL** con datos de prueba precargados
+- **Dockerización** completa con Dockerfile
+- **Generación automática** de números de orden (PO-YYYY-XXXXXX)
 
-- ✅ Entidad PurchaseOrder con todos los campos requeridos
-- ✅ Endpoints REST completos (POST, GET, PUT, DELETE)
-- ✅ Sistema de filtros avanzados (búsqueda, estado, moneda, montos, fechas)
-- ✅ Validaciones de negocio y técnicas
-- ✅ Generación automática de números de orden
-- ✅ Manejo global de excepciones
-- ✅ Base de datos H2 (en memoria) para desarrollo
-- ✅ Documentación completa de API
-- ✅ Pruebas unitarias
+## Stack Tecnológico
 
-## Tecnologías Utilizadas
+- **Java 17** - Lenguaje de programación
+- **Spring Boot 3.2.1** - Framework principal
+- **Spring Data JPA** - Persistencia de datos
+- **MySQL 8.0** - Base de datos
+- **Docker** - Contenerización
+- **Maven** - Gestión de dependencias
+- **Bean Validation** - Validaciones
 
-- **Java 17**
-- **Spring Boot 4.0.0**
-- **Spring Data JPA**
-- **Spring Web MVC**
-- **Bean Validation**
-- **H2 Database**
-- **Maven**
-- **JUnit 5**
+## Inicio Rápido
+
+### Opción 1: Con Docker
+
+```bash
+# Construir imagen Docker
+docker build -t purchaseorder-api .
+
+# Ejecutar contenedor (requiere MySQL externo)
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=docker purchaseorder-api
+```
+
+### Opción 2: Ejecución Local
+
+```bash
+# 1. Configurar MySQL local
+# Puerto: 3308, Usuario: AppRoot, Contraseña: abcd, BD: orden
+
+# 2. Compilar y ejecutar aplicación
+./mvnw clean compile
+./mvnw spring-boot:run
+```
+
+La aplicación estará disponible en: **http://localhost:8080**
+
+## Endpoints Implementados
+
+### Base URL
+```
+http://localhost:8080/api/v1/purchase-orders
+```
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `POST` | `/` | Crear nueva orden de compra |
+| `GET` | `/` | Listar órdenes con filtros opcionales |
+| `GET` | `/{id}` | Obtener orden específica por ID |
+| `PUT` | `/{id}` | Actualizar orden existente |
+| `DELETE` | `/{id}` | Eliminar orden |
+| `GET` | `/generate-order-number` | Generar nuevo número de orden |
+| `GET` | `/health` | Health check del servicio |
+
+## Filtros Obligatorios Implementados
+
+Todos los filtros son **opcionales** y se combinan con **lógica AND**:
+
+| Parámetro | Tipo | Validación | Descripción | Ejemplo |
+|-----------|------|------------|-------------|---------|
+| `q` | String | Case-insensitive | Búsqueda en orderNumber y supplierName | `?q=acme` |
+| `status` | Enum | Valores válidos únicamente | DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED | `?status=APPROVED` |
+| `currency` | Enum | USD, EUR únicamente | Filtro por moneda exacta | `?currency=USD` |
+| `minTotal` | BigDecimal | >= 0 | Monto mínimo (totalAmount >= minTotal) | `?minTotal=1000` |
+| `maxTotal` | BigDecimal | >= 0 | Monto máximo (totalAmount <= maxTotal) | `?maxTotal=5000` |
+| `from` | DateTime | ISO-8601, from <= to | Fecha desde (createdAt >= from) | `?from=2025-01-01T00:00:00` |
+| `to` | DateTime | ISO-8601, from <= to | Fecha hasta (createdAt <= to) | `?to=2025-12-31T23:59:59` |
+
+### Reglas de Validación de Filtros
+
+- **Estados inválidos** → `400 Bad Request`
+- **Monedas inválidas** → `400 Bad Request` 
+- **Montos negativos** → `400 Bad Request`
+- **from > to** → `400 Bad Request`
+- **Formato de fecha inválido** → `400 Bad Request`
+
+## Ejemplos de Uso
+
+### Crear orden de compra
+```http
+POST /api/v1/purchase-orders
+Content-Type: application/json
+
+{
+    "orderNumber": "PO-2025-000123",
+    "supplierName": "ACME Tools Inc.",
+    "status": "DRAFT",
+    "totalAmount": 1250.50,
+    "currency": "USD",
+    "expectedDeliveryDate": "2025-02-15"
+}
+```
+
+### Ejemplos de filtros
+
+```http
+# Búsqueda por texto
+GET /api/v1/purchase-orders?q=acme
+
+# Filtro por estado
+GET /api/v1/purchase-orders?status=APPROVED
+
+# Filtros por monto
+GET /api/v1/purchase-orders?minTotal=1000&maxTotal=5000
+
+# Filtro por rango de fechas
+GET /api/v1/purchase-orders?from=2025-01-01T00:00:00&to=2025-01-31T23:59:59
+
+# Filtros combinados
+GET /api/v1/purchase-orders?q=acme&status=APPROVED&currency=USD&minTotal=1000
+```
 
 ## Estructura del Proyecto
 
 ```
-src/
-├── main/
-│   ├── java/ec/edu/espe/paredes_leccion2/
-│   │   ├── controllers/          # Controladores REST
-│   │   ├── services/             # Lógica de negocio
-│   │   ├── repositories/         # Acceso a datos
-│   │   ├── models/
-│   │   │   ├── entities/         # Entidades JPA
-│   │   │   └── enums/           # Enumeraciones
-│   │   └── exceptions/          # Manejo de excepciones
-│   └── resources/
-│       ├── application.properties # Configuración
-│       └── data.sql              # Datos iniciales
-└── test/
-    └── java/                     # Pruebas unitarias
+src/main/java/ec/edu/espe/paredes_leccion2/
+├── ParedesLeccion2Application.java    # Clase principal
+├── config/
+│   └── WebConfig.java                 # Configuración web
+├── controllers/
+│   └── PurchaseOrderController.java   # Controlador REST
+├── services/
+│   └── PurchaseOrderService.java      # Lógica de negocio
+├── repositories/
+│   └── PurchaseOrderRepository.java   # Queries personalizadas
+├── models/
+│   ├── entities/
+│   │   └── PurchaseOrder.java         # Entidad JPA
+│   └── enums/
+│       ├── OrderStatus.java           # Estados de orden
+│       └── Currency.java              # Monedas soportadas
+└── exceptions/
+    ├── GlobalExceptionHandler.java    # Manejo global de errores
+    ├── EntityNotFoundException.java   # Excepción personalizada
+    └── ValidationException.java       # Excepción de validación
 ```
 
-## Instalación y Ejecución
-
-### Prerrequisitos
-- Java 17 o superior
-- Maven 3.6+
-
-### Pasos de Instalación
-
-1. **Clonar o descargar el proyecto**
-   ```bash
-   cd paredes_leccion2
-   ```
-
-2. **Compilar el proyecto**
-   ```bash
-   mvn clean compile
-   ```
-
-3. **Ejecutar la aplicación**
-   ```bash
-   mvn spring-boot:run
-   ```
-
-4. **La aplicación estará disponible en:**
-   - API: http://localhost:8080
-   - H2 Console: http://localhost:8080/h2-console
-
-## Configuración de Base de Datos H2
-
-Para acceder a la consola de H2:
-
-- **URL:** http://localhost:8080/h2-console
-- **JDBC URL:** jdbc:h2:mem:testdb
-- **Username:** sa
-- **Password:** password
-
-## Uso de la API
-
-### Endpoints Principales
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/v1/purchase-orders` | Crear nueva orden |
-| GET | `/api/v1/purchase-orders` | Listar órdenes con filtros |
-| GET | `/api/v1/purchase-orders/{id}` | Obtener orden por ID |
-| PUT | `/api/v1/purchase-orders/{id}` | Actualizar orden |
-| DELETE | `/api/v1/purchase-orders/{id}` | Eliminar orden |
-
-### Ejemplos de Uso
-
-#### Crear una Orden
-```bash
-curl -X POST http://localhost:8080/api/v1/purchase-orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "supplierName": "ACME Tools",
-    "totalAmount": 1250.50,
-    "currency": "USD",
-    "expectedDeliveryDate": "2025-02-15"
-  }'
-```
-
-#### Buscar Órdenes con Filtros
-```bash
-# Búsqueda por texto
-curl "http://localhost:8080/api/v1/purchase-orders?q=acme"
-
-# Filtrar por estado
-curl "http://localhost:8080/api/v1/purchase-orders?status=APPROVED"
-
-# Filtrar por moneda y rango de montos
-curl "http://localhost:8080/api/v1/purchase-orders?currency=USD&minTotal=100&maxTotal=2000"
-
-# Filtrar por rango de fechas
-curl "http://localhost:8080/api/v1/purchase-orders?from=2025-01-01T00:00:00&to=2025-12-31T23:59:59"
-
-# Combinar múltiples filtros
-curl "http://localhost:8080/api/v1/purchase-orders?q=acme&status=APPROVED&currency=USD"
-```
-
-### Filtros Disponibles
-
-1. **q** - Búsqueda de texto (orderNumber, supplierName)
-2. **status** - Estado (DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED)
-3. **currency** - Moneda (USD, EUR)
-4. **minTotal** - Monto mínimo
-5. **maxTotal** - Monto máximo
-6. **from** - Fecha desde (yyyy-MM-ddTHH:mm:ss)
-7. **to** - Fecha hasta (yyyy-MM-ddTHH:mm:ss)
-
-## Validaciones Implementadas
+## Modelo de Datos
 
 ### Entidad PurchaseOrder
-- ✅ orderNumber: único, formato PO-YYYY-XXXXXX
-- ✅ supplierName: requerido, máximo 255 caracteres
-- ✅ status: requerido, valores del enum
-- ✅ totalAmount: requerido, mayor a 0
-- ✅ currency: requerido, USD o EUR
-- ✅ expectedDeliveryDate: requerido, fecha futura
 
-### Filtros
-- ✅ status: solo valores válidos del enum
-- ✅ currency: solo valores válidos del enum
-- ✅ minTotal/maxTotal: >= 0, minTotal <= maxTotal
-- ✅ from/to: formato correcto, from <= to
+| Campo | Tipo | Validaciones | Descripción |
+|-------|------|--------------|-------------|
+| `id` | Long | PK, Auto-increment | Identificador único |
+| `orderNumber` | String | Unique, Pattern: PO-YYYY-XXXXXX | Número de orden |
+| `supplierName` | String | NotBlank, Max 255 chars | Nombre del proveedor |
+| `status` | OrderStatus | NotNull, Enum | Estado de la orden |
+| `totalAmount` | BigDecimal | NotNull, > 0, Precision 19,2 | Monto total |
+| `currency` | Currency | NotNull, Enum | Moneda |
+| `createdAt` | LocalDateTime | Auto-generated | Fecha de creación |
+| `expectedDeliveryDate` | LocalDate | NotNull, Future | Fecha estimada de entrega |
+
+## Configuración
+
+### Base de datos MySQL (Local)
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3308/orden
+spring.datasource.username=AppRoot
+spring.datasource.password=abcd
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+```
+
+### Base de datos MySQL (Docker)
+```properties
+spring.datasource.url=jdbc:mysql://mysql:3306/orden
+spring.datasource.username=AppRoot
+spring.datasource.password=abcd
+```
 
 ## Datos de Prueba
 
-La aplicación se inicia con datos de ejemplo:
+La aplicación incluye 8 órdenes de prueba precargadas con:
+- Diferentes estados (DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED)
+- Múltiples proveedores (ACME Tools, Global Supplies, etc.)
+- Variedad en montos y monedas (USD, EUR)
+- Fechas distribuidas en enero 2025
 
-- PO-2025-000001 - ACME Tools - DRAFT - $1,250.50
-- PO-2025-000002 - Tech Supplies Inc - SUBMITTED - €2,300.75
-- PO-2025-000003 - Global Materials - APPROVED - $5,500.00
-- PO-2025-000004 - ACME Tools - REJECTED - €750.25
-- PO-2025-000005 - Industrial Parts Co - CANCELLED - $3,200.00
-- PO-2025-000006 - Office Solutions - APPROVED - €890.50
-- PO-2025-000007 - Tech Supplies Inc - DRAFT - $1,800.75
+## Manejo de Errores
 
-## Ejecutar Pruebas
-
-```bash
-# Ejecutar todas las pruebas
-mvn test
-
-# Ejecutar pruebas específicas
-mvn test -Dtest=PurchaseOrderControllerTest
+### Estructura de Respuesta de Error
+```json
+{
+  "timestamp": "2025-01-10T15:30:00",
+  "status": 400,
+  "error": "Validation Error",
+  "message": "Estado no válido: INVALID_STATUS. Valores permitidos: DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED"
+}
 ```
 
-## 🐳 Despliegue con Docker
+### Códigos HTTP Implementados
+- `200 OK` - Operación exitosa
+- `201 Created` - Recurso creado
+- `400 Bad Request` - Datos inválidos o filtros incorrectos
+- `404 Not Found` - Recurso no encontrado
+- `500 Internal Server Error` - Error interno
 
-### Construcción de Imagen Docker
+## Docker
 
-#### Opción 1: Script Automático (Recomendado)
-```powershell
-# Construir imagen localmente
-.\docker-build.ps1
-
-# Construir y subir a Docker Hub
-.\docker-deploy.ps1
-```
-
-#### Opción 2: Comandos Manuales
+### Dockerfile incluido
 ```bash
 # Construir imagen
-docker build -t purchaseorder-api:latest .
+docker build -t purchaseorder-api .
 
-# Ejecutar contenedor
-docker run -d -p 8080:8080 --name purchaseorder-container purchaseorder-api:latest
+# Ejecutar con perfil Docker
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=docker purchaseorder-api
 ```
 
-### Docker Compose
+## Testing
+
+### Endpoints de prueba rápida
 ```bash
-# Iniciar con docker-compose
-docker-compose up -d
+# Health check
+curl http://localhost:8080/api/v1/purchase-orders/health
 
-# Ver logs
-docker-compose logs -f
+# Listar todas las órdenes
+curl http://localhost:8080/api/v1/purchase-orders
 
-# Detener
-docker-compose down
+# Probar filtros
+curl "http://localhost:8080/api/v1/purchase-orders?q=acme&status=APPROVED"
 ```
 
-### Acceso en Docker
-- **API:** http://localhost:8080
-- **H2 Console:** http://localhost:8080/h2-console
-- **Health:** http://localhost:8080/api/v1/purchase-orders/health
+## Autor
 
-Ver `DOCKER_GUIDE.md` para documentación completa de Docker.
-
-## Estructura de Respuestas
-
-### Respuesta Exitosa
-```json
-{
-  "timestamp": "2025-01-15T10:30:00",
-  "status": 200,
-  "message": "Operación exitosa",
-  "data": { ... }
-}
-```
-
-### Respuesta de Error
-```json
-{
-  "timestamp": "2025-01-15T10:30:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Descripción del error",
-  "details": { ... }
-}
-```
-
-## Estados de Orden
-
-- **DRAFT** - Borrador inicial
-- **SUBMITTED** - Enviada para aprobación  
-- **APPROVED** - Aprobada
-- **REJECTED** - Rechazada
-- **CANCELLED** - Cancelada
-
-## Monedas Soportadas
-
-- **USD** - Dólar estadounidense
-- **EUR** - Euro
-
-## Logging
-
-Los logs están configurados para mostrar:
-- Consultas SQL ejecutadas
-- Parámetros de binding
-- Operaciones de la API
-- Errores y excepciones
-
-## Documentación Adicional
-
-Ver `API_DOCUMENTATION.md` para documentación detallada de la API.
-
-## Contribución
-
-1. Fork el proyecto
-2. Crear una rama para tu feature
-3. Commit los cambios
-4. Push a la rama
-5. Crear un Pull Request
-
-## Licencia
-
-Este proyecto es para fines educativos.
+**Paredes** - Lección 2 - Sistemas Distribuidos - ESPE
 
 ---
 
-**Autor:** Paredes  
-**Curso:** Sistemas Distribuidos - Lección 2  
-**Universidad:** ESPE
+**Nota:** Este proyecto implementa completamente todos los requerimientos de filtros obligatorios especificados, con validaciones robustas y manejo de errores apropiado.
+
+
