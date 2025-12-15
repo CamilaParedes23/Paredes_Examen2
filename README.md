@@ -1,54 +1,118 @@
-# Purchase Order API
+# Purchase Order Management System
 
-API REST para la gestión de órdenes de compra desarrollada con **Spring Boot 3** y **Java 17**, implementando filtros avanzados y cumpliendo con los principios REST y buenas prácticas de desarrollo.
+Sistema completo de gestión de órdenes de compra con **API REST** desarrollada en **Spring Boot 3 + Java 17**, **interfaz gráfica React** y **base de datos MySQL**, todo dockerizado con **Docker Compose**.
+
+## Arquitectura del Sistema
+
+Este proyecto implementa una solución distribuida completa que incluye:
+
+- **API REST** - Backend Spring Boot 3 con filtros avanzados y validaciones
+- **Frontend React** - Interfaz gráfica moderna y responsiva 
+- **Base de datos MySQL** - Persistencia de datos con contenedor Docker
+- **Docker Compose** - Orquestación de todos los servicios
 
 ## Características Implementadas
 
-- **CRUD completo** para órdenes de compra
-- **6 filtros avanzados** obligatorios implementados (búsqueda, estado, moneda, montos, fechas)
+### Backend (Spring Boot 3)
+- **CRUD completo** para órdenes de compra con endpoints REST
+- **6 filtros avanzados** obligatorios (búsqueda, estado, moneda, montos, fechas)
 - **Validaciones robustas** con Bean Validation y validaciones de negocio
-- **Manejo global de errores** con respuestas JSON estructuradas y códigos HTTP apropiados
+- **Manejo global de errores** con respuestas JSON estructuradas
 - **Arquitectura en capas** (Controller, Service, Repository)
-- **Base de datos MySQL** con datos de prueba precargados
-- **Dockerización** completa con Dockerfile
 - **Generación automática** de números de orden (PO-YYYY-XXXXXX)
+- **Health check** endpoint para monitoreo
+
+### Frontend (React 18)
+- **Interfaz moderna** con Bootstrap 5 y componentes responsivos
+- **Lista de órdenes** con filtros en tiempo real
+- **Formularios dinámicos** para crear y editar órdenes
+- **Vista detallada** de cada orden de compra
+- **Manejo de errores** y estados de carga
+- **Navegación SPA** con React Router
+
+### Base de Datos (MySQL 8)
+- **Esquema optimizado** con constraints y validaciones
+- **Datos de prueba** precargados automáticamente
+- **Contenedor Docker** con persistencia de volúmenes
 
 ## Stack Tecnológico
 
+### Backend
 - **Java 17** - Lenguaje de programación
 - **Spring Boot 3.2.1** - Framework principal
 - **Spring Data JPA** - Persistencia de datos
-- **MySQL 8.0** - Base de datos
-- **Docker** - Contenerización
-- **Maven** - Gestión de dependencias
 - **Bean Validation** - Validaciones
+- **Maven** - Gestión de dependencias
+
+### Frontend  
+- **React 18** - Framework de UI
+- **React Bootstrap** - Componentes UI
+- **Axios** - Cliente HTTP
+- **React Router** - Navegación SPA
+
+### Base de Datos y DevOps
+- **MySQL 8.0** - Base de datos relacional
+- **Docker** - Contenerización
+- **Docker Compose** - Orquestación de servicios
 
 ## Inicio Rápido
 
-### Opción 1: Con Docker
+### Opción 1: Docker Compose (Recomendado)
 
 ```bash
-# Construir imagen Docker
-docker build -t purchaseorder-api .
+# Ejecutar toda la solución completa
+docker-compose up -d
 
-# Ejecutar contenedor (requiere MySQL externo)
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=docker purchaseorder-api
+# Ver logs en tiempo real
+docker-compose logs -f
+
+# Detener todos los servicios
+docker-compose down
 ```
 
-### Opción 2: Ejecución Local
+### Opción 2: Servicios Individuales
 
 ```bash
-# 1. Configurar MySQL local
-# Puerto: 3308, Usuario: AppRoot, Contraseña: abcd, BD: orden
+# Solo base de datos
+docker-compose up mysql -d
 
-# 2. Compilar y ejecutar aplicación
-./mvnw clean compile
-./mvnw spring-boot:run
+# Solo API
+docker-compose up api -d
+
+# Solo frontend
+docker-compose up frontend -d
 ```
 
-La aplicación estará disponible en: **http://localhost:8080**
+### Acceso a los Servicios
 
-## Endpoints Implementados
+- **Frontend React**: http://localhost:3000
+- **API REST**: http://localhost:8080
+- **Base de datos MySQL**: localhost:3306
+
+## Funcionalidades del Frontend
+
+### Páginas Implementadas
+
+| Ruta | Componente | Descripción |
+|------|------------|-------------|
+| `/` | Redirige a `/orders` | Página principal |
+| `/orders` | PurchaseOrderList | Lista de órdenes con filtros |
+| `/orders/new` | PurchaseOrderForm | Formulario para nueva orden |
+| `/orders/edit/:id` | PurchaseOrderForm | Editar orden existente |
+| `/orders/view/:id` | PurchaseOrderDetail | Ver detalles de orden |
+
+### Características del Frontend
+
+- **Lista interactiva** con todos los filtros de la API implementados
+- **Formularios validados** con feedback visual en tiempo real
+- **Búsqueda en tiempo real** por número de orden y proveedor
+- **Filtros combinables** (estado, moneda, montos, fechas)
+- **Acciones CRUD** completas (crear, leer, actualizar, eliminar)
+- **Responsive design** compatible con móviles y tablets
+- **Estados de carga** y manejo de errores elegante
+- **Navegación intuitiva** con breadcrumbs y botones de acción
+
+## Endpoints de la API
 
 ### Base URL
 ```
@@ -125,11 +189,12 @@ GET /api/v1/purchase-orders?q=acme&status=APPROVED&currency=USD&minTotal=1000
 
 ## Estructura del Proyecto
 
+### Backend (Spring Boot)
 ```
 src/main/java/ec/edu/espe/paredes_leccion2/
 ├── ParedesLeccion2Application.java    # Clase principal
 ├── config/
-│   └── WebConfig.java                 # Configuración web
+│   └── WebConfig.java                 # Configuración web y CORS
 ├── controllers/
 │   └── PurchaseOrderController.java   # Controlador REST
 ├── services/
@@ -146,6 +211,38 @@ src/main/java/ec/edu/espe/paredes_leccion2/
     ├── GlobalExceptionHandler.java    # Manejo global de errores
     ├── EntityNotFoundException.java   # Excepción personalizada
     └── ValidationException.java       # Excepción de validación
+```
+
+### Frontend (React)
+```
+frontend/
+├── public/
+│   ├── index.html                     # HTML principal
+│   └── manifest.json                  # Configuración PWA
+├── src/
+│   ├── components/                    # Componentes reutilizables
+│   │   ├── Navbar.js                  # Barra de navegación
+│   │   ├── Footer.js                  # Pie de página
+│   │   └── Loading.js                 # Componente de carga
+│   ├── pages/                         # Páginas principales
+│   │   ├── PurchaseOrderList.js       # Lista de órdenes
+│   │   ├── PurchaseOrderForm.js       # Formulario CRUD
+│   │   └── PurchaseOrderDetail.js     # Detalles de orden
+│   ├── services/
+│   │   └── api.js                     # Cliente HTTP con Axios
+│   ├── App.js                         # Componente principal
+│   ├── App.css                        # Estilos principales
+│   └── index.js                       # Punto de entrada
+├── package.json                       # Dependencias npm
+└── Dockerfile                         # Imagen Docker
+```
+
+### Docker
+```
+├── docker-compose.yml                 # Orquestación completa
+├── Dockerfile                         # Imagen del backend
+└── frontend/
+    └── Dockerfile                     # Imagen del frontend
 ```
 
 ## Modelo de Datos
@@ -173,11 +270,28 @@ spring.datasource.password=abcd
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 ```
 
-### Base de datos MySQL (Docker)
+### Base de datos MySQL (Docker Compose)
 ```properties
 spring.datasource.url=jdbc:mysql://mysql:3306/orden
 spring.datasource.username=AppRoot
 spring.datasource.password=abcd
+```
+
+### Variables de entorno Docker
+```yaml
+# MySQL
+MYSQL_ROOT_PASSWORD: root123
+MYSQL_DATABASE: orden
+MYSQL_USER: AppRoot
+MYSQL_PASSWORD: abcd
+
+# API
+SPRING_PROFILES_ACTIVE: docker
+DB_HOST: mysql
+DB_PORT: 3306
+
+# Frontend
+REACT_APP_API_URL: http://localhost:8080/api/v1
 ```
 
 ## Datos de Prueba
@@ -207,12 +321,23 @@ La aplicación incluye 8 órdenes de prueba precargadas con:
 - `404 Not Found` - Recurso no encontrado
 - `500 Internal Server Error` - Error interno
 
+## Datos de Prueba
+
+La aplicación incluye 8 órdenes de prueba precargadas con:
+- Diferentes estados (DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED)
+- Múltiples proveedores (ACME Tools, Global Supplies, etc.)
+- Variedad en montos y monedas (USD, EUR)
+- Fechas distribuidas en enero 2025
+
 ## Docker
 
 ### Dockerfile incluido
 ```bash
-# Construir imagen
+# Construir imagen del backend
 docker build -t purchaseorder-api .
+
+# Construir imagen del frontend
+docker build -t purchaseorder-frontend ./frontend
 
 # Ejecutar con perfil Docker
 docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=docker purchaseorder-api
@@ -231,6 +356,13 @@ curl http://localhost:8080/api/v1/purchase-orders
 # Probar filtros
 curl "http://localhost:8080/api/v1/purchase-orders?q=acme&status=APPROVED"
 ```
+
+### Pruebas con el Frontend
+1. Acceder a http://localhost:3000
+2. Explorar la lista de órdenes con filtros
+3. Crear nueva orden desde la interfaz
+4. Editar órdenes existentes
+5. Ver detalles completos de cada orden
 
 ## Autor
 

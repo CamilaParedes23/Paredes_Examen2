@@ -19,6 +19,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/v1/purchase-orders")
+@CrossOrigin(origins = {"http://localhost:3000", "http://frontend:3000"})
 public class PurchaseOrderController {
 
     @Autowired
