@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Badge, Alert, Table } from 'react-bootstrap';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { purchaseOrderService, STATUS_LABELS } from '../services/api';
-import Loading from '../components/Loading';
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Badge,
+  Alert,
+  Table,
+} from "react-bootstrap";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { purchaseOrderService, STATUS_LABELS } from "../services/api";
+import Loading from "../components/Loading";
 
 const PurchaseOrderDetail = () => {
   const { id } = useParams();
@@ -21,22 +30,24 @@ const PurchaseOrderDetail = () => {
       setLoading(true);
       setError(null);
       const response = await purchaseOrderService.getOrderById(id);
-      setOrder(response.data);
+      // La API puede devolver {data: {...}} o directamente el objeto
+      const orderData = response.data.data || response.data;
+      setOrder(orderData);
     } catch (err) {
-      console.error('Error loading order:', err);
-      setError(err.response?.data?.message || 'Error al cargar la orden');
+      console.error("Error loading order:", err);
+      setError(err.response?.data?.message || "Error al cargar la orden");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteOrder = async () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta orden?')) {
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta orden?")) {
       try {
         await purchaseOrderService.deleteOrder(id);
-        navigate('/orders');
+        navigate("/orders");
       } catch (err) {
-        setError(err.response?.data?.message || 'Error al eliminar la orden');
+        setError(err.response?.data?.message || "Error al eliminar la orden");
       }
     }
   };
@@ -44,37 +55,39 @@ const PurchaseOrderDetail = () => {
   // Obtener clase CSS para badge de estado
   const getStatusBadgeClass = (status) => {
     const classes = {
-      DRAFT: 'badge-status-draft',
-      SUBMITTED: 'badge-status-submitted',
-      APPROVED: 'badge-status-approved',
-      REJECTED: 'badge-status-rejected',
-      CANCELLED: 'badge-status-cancelled'
+      DRAFT: "badge-status-draft",
+      SUBMITTED: "badge-status-submitted",
+      APPROVED: "badge-status-approved",
+      REJECTED: "badge-status-rejected",
+      CANCELLED: "badge-status-cancelled",
     };
-    return classes[status] || 'bg-secondary';
+    return classes[status] || "bg-secondary";
   };
 
   // Formatear fecha
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   // Formatear fecha simple
   const formatDateSimple = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('es-ES');
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("es-ES");
   };
 
   // Formatear monto
   const formatAmount = (amount, currency) => {
-    const symbol = currency === 'USD' ? '$' : '€';
-    return `${symbol}${Number(amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
+    const symbol = currency === "USD" ? "$" : "€";
+    return `${symbol}${Number(amount).toLocaleString("es-ES", {
+      minimumFractionDigits: 2,
+    })}`;
   };
 
   if (loading) {
@@ -112,19 +125,14 @@ const PurchaseOrderDetail = () => {
               <h2 className="h3 mb-0">Detalles de Orden</h2>
               <div className="d-flex gap-2">
                 <Link to="/orders">
-                  <Button variant="outline-secondary">
-                    ← Volver a Lista
-                  </Button>
+                  <Button variant="outline-secondary">← Volver a Lista</Button>
                 </Link>
                 <Link to={`/orders/edit/${order.id}`}>
                   <Button variant="warning" className="text-white">
                     Editar
                   </Button>
                 </Link>
-                <Button
-                  variant="danger"
-                  onClick={handleDeleteOrder}
-                >
+                <Button variant="danger" onClick={handleDeleteOrder}>
                   Eliminar
                 </Button>
               </div>
@@ -135,7 +143,10 @@ const PurchaseOrderDetail = () => {
               <Card.Header className="card-header-custom">
                 <div className="d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">Información General</h5>
-                  <Badge className={getStatusBadgeClass(order.status)} style={{ fontSize: '0.9rem' }}>
+                  <Badge
+                    className={getStatusBadgeClass(order.status)}
+                    style={{ fontSize: "0.9rem" }}
+                  >
                     {STATUS_LABELS[order.status] || order.status}
                   </Badge>
                 </div>
@@ -145,7 +156,9 @@ const PurchaseOrderDetail = () => {
                   <Col md={6}>
                     <div className="border-end pe-3">
                       <h6 className="text-muted mb-2">Número de Orden</h6>
-                      <p className="h5 mb-3 text-primary">{order.orderNumber}</p>
+                      <p className="h5 mb-3 text-primary">
+                        {order.orderNumber}
+                      </p>
 
                       <h6 className="text-muted mb-2">Proveedor</h6>
                       <p className="mb-3">{order.supplierName}</p>
@@ -164,7 +177,9 @@ const PurchaseOrderDetail = () => {
 
                     <h6 className="text-muted mb-2">Moneda</h6>
                     <p className="mb-3">
-                      {order.currency === 'USD' ? 'Dólares Americanos (USD)' : 'Euros (EUR)'}
+                      {order.currency === "USD"
+                        ? "Dólares Americanos (USD)"
+                        : "Euros (EUR)"}
                     </p>
 
                     <h6 className="text-muted mb-2">ID de Orden</h6>
@@ -189,7 +204,9 @@ const PurchaseOrderDetail = () => {
                     </p>
                   </Col>
                   <Col md={6}>
-                    <h6 className="text-muted mb-2">Fecha de Entrega Esperada</h6>
+                    <h6 className="text-muted mb-2">
+                      Fecha de Entrega Esperada
+                    </h6>
                     <p className="mb-0">
                       <i className="bi bi-calendar-check me-2"></i>
                       {formatDateSimple(order.expectedDeliveryDate)}
@@ -208,7 +225,9 @@ const PurchaseOrderDetail = () => {
                 <Table className="mb-0" striped>
                   <tbody>
                     <tr>
-                      <th className="ps-3" style={{ width: '30%' }}>Número de Orden:</th>
+                      <th className="ps-3" style={{ width: "30%" }}>
+                        Número de Orden:
+                      </th>
                       <td>{order.orderNumber}</td>
                     </tr>
                     <tr>
@@ -231,7 +250,11 @@ const PurchaseOrderDetail = () => {
                     </tr>
                     <tr>
                       <th className="ps-3">Moneda:</th>
-                      <td>{order.currency === 'USD' ? 'Dólares (USD)' : 'Euros (EUR)'}</td>
+                      <td>
+                        {order.currency === "USD"
+                          ? "Dólares (USD)"
+                          : "Euros (EUR)"}
+                      </td>
                     </tr>
                     <tr>
                       <th className="ps-3">Fecha de Creación:</th>
@@ -253,7 +276,10 @@ const PurchaseOrderDetail = () => {
             {/* Acciones Adicionales */}
             <div className="d-flex justify-content-center gap-3 mt-4">
               <Link to="/orders">
-                <Button variant="outline-primary" className="btn-outline-primary-custom">
+                <Button
+                  variant="outline-primary"
+                  className="btn-outline-primary-custom"
+                >
                   Ver Todas las Órdenes
                 </Button>
               </Link>

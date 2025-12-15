@@ -1,8 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { purchaseOrderService, ORDER_STATUS, CURRENCY, STATUS_LABELS, CURRENCY_LABELS } from '../services/api';
-import Loading from '../components/Loading';
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Form,
+  Button,
+  Alert,
+} from "react-bootstrap";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import {
+  purchaseOrderService,
+  ORDER_STATUS,
+  CURRENCY,
+  STATUS_LABELS,
+  CURRENCY_LABELS,
+} from "../services/api";
+import Loading from "../components/Loading";
 
 const PurchaseOrderForm = () => {
   const navigate = useNavigate();
@@ -15,12 +29,12 @@ const PurchaseOrderForm = () => {
   const [generatingOrderNumber, setGeneratingOrderNumber] = useState(false);
 
   const [formData, setFormData] = useState({
-    orderNumber: '',
-    supplierName: '',
+    orderNumber: "",
+    supplierName: "",
     status: ORDER_STATUS.DRAFT,
-    totalAmount: '',
+    totalAmount: "",
     currency: CURRENCY.USD,
-    expectedDeliveryDate: ''
+    expectedDeliveryDate: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -38,7 +52,8 @@ const PurchaseOrderForm = () => {
     try {
       setLoading(true);
       const response = await purchaseOrderService.getOrderById(id);
-      const order = response.data;
+      // La API puede devolver {data: {...}} o directamente el objeto
+      const order = response.data.data || response.data;
 
       setFormData({
         orderNumber: order.orderNumber,
@@ -46,10 +61,10 @@ const PurchaseOrderForm = () => {
         status: order.status,
         totalAmount: order.totalAmount.toString(),
         currency: order.currency,
-        expectedDeliveryDate: order.expectedDeliveryDate
+        expectedDeliveryDate: order.expectedDeliveryDate,
       });
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al cargar la orden');
+      setError(err.response?.data?.message || "Error al cargar la orden");
     } finally {
       setLoading(false);
     }
@@ -59,18 +74,23 @@ const PurchaseOrderForm = () => {
     try {
       setGeneratingOrderNumber(true);
       const response = await purchaseOrderService.generateOrderNumber();
-      setFormData(prev => ({
+      // La API devuelve {orderNumber: "PO-2025-XXXXXX", ...}
+      const orderNumber =
+        response.data.orderNumber || response.data.data || response.data;
+      setFormData((prev) => ({
         ...prev,
-        orderNumber: response.data
+        orderNumber: String(orderNumber),
       }));
     } catch (err) {
-      console.error('Error generating order number:', err);
+      console.error("Error generating order number:", err);
       // Si falla, generar uno manual como fallback
       const year = new Date().getFullYear();
-      const random = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
-      setFormData(prev => ({
+      const random = Math.floor(Math.random() * 999999)
+        .toString()
+        .padStart(6, "0");
+      setFormData((prev) => ({
         ...prev,
-        orderNumber: `PO-${year}-${random}`
+        orderNumber: `PO-${year}-${random}`,
       }));
     } finally {
       setGeneratingOrderNumber(false);
@@ -78,16 +98,16 @@ const PurchaseOrderForm = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
 
     // Limpiar error del campo modificado
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: null
+        [field]: null,
       }));
     }
   };
@@ -95,37 +115,40 @@ const PurchaseOrderForm = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.orderNumber.trim()) {
-      newErrors.orderNumber = 'El número de orden es requerido';
+    const orderNumber = String(formData.orderNumber || "").trim();
+    if (!orderNumber) {
+      newErrors.orderNumber = "El número de orden es requerido";
     }
 
-    if (!formData.supplierName.trim()) {
-      newErrors.supplierName = 'El nombre del proveedor es requerido';
-    } else if (formData.supplierName.trim().length > 255) {
-      newErrors.supplierName = 'El nombre del proveedor no puede exceder 255 caracteres';
+    const supplierName = String(formData.supplierName || "").trim();
+    if (!supplierName) {
+      newErrors.supplierName = "El nombre del proveedor es requerido";
+    } else if (supplierName.length > 255) {
+      newErrors.supplierName =
+        "El nombre del proveedor no puede exceder 255 caracteres";
     }
 
     if (!formData.status) {
-      newErrors.status = 'El estado es requerido';
+      newErrors.status = "El estado es requerido";
     }
 
     if (!formData.totalAmount || parseFloat(formData.totalAmount) <= 0) {
-      newErrors.totalAmount = 'El monto total debe ser mayor a 0';
+      newErrors.totalAmount = "El monto total debe ser mayor a 0";
     }
 
     if (!formData.currency) {
-      newErrors.currency = 'La moneda es requerida';
+      newErrors.currency = "La moneda es requerida";
     }
 
     if (!formData.expectedDeliveryDate) {
-      newErrors.expectedDeliveryDate = 'La fecha de entrega es requerida';
+      newErrors.expectedDeliveryDate = "La fecha de entrega es requerida";
     } else {
       const deliveryDate = new Date(formData.expectedDeliveryDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       if (deliveryDate < today) {
-        newErrors.expectedDeliveryDate = 'La fecha de entrega debe ser futura';
+        newErrors.expectedDeliveryDate = "La fecha de entrega debe ser futura";
       }
     }
 
@@ -149,32 +172,34 @@ const PurchaseOrderForm = () => {
         ...formData,
         totalAmount: parseFloat(formData.totalAmount),
         supplierName: formData.supplierName.trim(),
-        orderNumber: formData.orderNumber.trim()
+        orderNumber: formData.orderNumber.trim(),
       };
 
       if (isEditing) {
         await purchaseOrderService.updateOrder(id, orderData);
-        setSuccess('Orden actualizada exitosamente');
+        setSuccess("Orden actualizada exitosamente");
       } else {
         await purchaseOrderService.createOrder(orderData);
-        setSuccess('Orden creada exitosamente');
+        setSuccess("Orden creada exitosamente");
       }
 
       // Redirigir después de un breve delay
       setTimeout(() => {
-        navigate('/orders');
+        navigate("/orders");
       }, 1500);
-
     } catch (err) {
-      console.error('Error saving order:', err);
-      setError(err.response?.data?.message || `Error al ${isEditing ? 'actualizar' : 'crear'} la orden`);
+      console.error("Error saving order:", err);
+      setError(
+        err.response?.data?.message ||
+          `Error al ${isEditing ? "actualizar" : "crear"} la orden`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/orders');
+    navigate("/orders");
   };
 
   if (loading && isEditing) {
@@ -189,18 +214,21 @@ const PurchaseOrderForm = () => {
             {/* Header */}
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h2 className="h3 mb-0">
-                {isEditing ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'}
+                {isEditing ? "Editar Orden de Compra" : "Nueva Orden de Compra"}
               </h2>
               <Link to="/orders">
-                <Button variant="outline-secondary">
-                  ← Volver a Lista
-                </Button>
+                <Button variant="outline-secondary">← Volver a Lista</Button>
               </Link>
             </div>
 
             {/* Alertas */}
             {error && (
-              <Alert variant="danger" dismissible onClose={() => setError(null)} className="alert-custom">
+              <Alert
+                variant="danger"
+                dismissible
+                onClose={() => setError(null)}
+                className="alert-custom"
+              >
                 <Alert.Heading>Error</Alert.Heading>
                 <p>{error}</p>
               </Alert>
@@ -216,9 +244,7 @@ const PurchaseOrderForm = () => {
             {/* Formulario */}
             <Card className="card-custom">
               <Card.Header className="card-header-custom">
-                <h5 className="mb-0">
-                  Información de la Orden
-                </h5>
+                <h5 className="mb-0">Información de la Orden</h5>
               </Card.Header>
               <Card.Body>
                 <Form onSubmit={handleSubmit}>
@@ -233,7 +259,9 @@ const PurchaseOrderForm = () => {
                           <Form.Control
                             type="text"
                             value={formData.orderNumber}
-                            onChange={(e) => handleInputChange('orderNumber', e.target.value)}
+                            onChange={(e) =>
+                              handleInputChange("orderNumber", e.target.value)
+                            }
                             isInvalid={!!errors.orderNumber}
                             className="form-control-custom"
                             placeholder="PO-2025-XXXXXX"
@@ -265,12 +293,16 @@ const PurchaseOrderForm = () => {
                         </Form.Label>
                         <Form.Select
                           value={formData.status}
-                          onChange={(e) => handleInputChange('status', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("status", e.target.value)
+                          }
                           isInvalid={!!errors.status}
                           className="form-control-custom"
                         >
                           {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                            <option key={key} value={key}>{label}</option>
+                            <option key={key} value={key}>
+                              {label}
+                            </option>
                           ))}
                         </Form.Select>
                         <Form.Control.Feedback type="invalid">
@@ -288,7 +320,9 @@ const PurchaseOrderForm = () => {
                         <Form.Control
                           type="text"
                           value={formData.supplierName}
-                          onChange={(e) => handleInputChange('supplierName', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("supplierName", e.target.value)
+                          }
                           isInvalid={!!errors.supplierName}
                           className="form-control-custom"
                           placeholder="Ej: ACME Tools Inc."
@@ -312,7 +346,9 @@ const PurchaseOrderForm = () => {
                         <Form.Control
                           type="number"
                           value={formData.totalAmount}
-                          onChange={(e) => handleInputChange('totalAmount', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("totalAmount", e.target.value)
+                          }
                           isInvalid={!!errors.totalAmount}
                           className="form-control-custom"
                           placeholder="0.00"
@@ -333,13 +369,19 @@ const PurchaseOrderForm = () => {
                         </Form.Label>
                         <Form.Select
                           value={formData.currency}
-                          onChange={(e) => handleInputChange('currency', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("currency", e.target.value)
+                          }
                           isInvalid={!!errors.currency}
                           className="form-control-custom"
                         >
-                          {Object.entries(CURRENCY_LABELS).map(([key, label]) => (
-                            <option key={key} value={key}>{label}</option>
-                          ))}
+                          {Object.entries(CURRENCY_LABELS).map(
+                            ([key, label]) => (
+                              <option key={key} value={key}>
+                                {label}
+                              </option>
+                            )
+                          )}
                         </Form.Select>
                         <Form.Control.Feedback type="invalid">
                           {errors.currency}
@@ -356,7 +398,12 @@ const PurchaseOrderForm = () => {
                         <Form.Control
                           type="date"
                           value={formData.expectedDeliveryDate}
-                          onChange={(e) => handleInputChange('expectedDeliveryDate', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "expectedDeliveryDate",
+                              e.target.value
+                            )
+                          }
                           isInvalid={!!errors.expectedDeliveryDate}
                           className="form-control-custom"
                         />
@@ -383,7 +430,11 @@ const PurchaseOrderForm = () => {
                       disabled={loading}
                       className="btn-primary-custom"
                     >
-                      {loading ? 'Guardando...' : (isEditing ? 'Actualizar Orden' : 'Crear Orden')}
+                      {loading
+                        ? "Guardando..."
+                        : isEditing
+                        ? "Actualizar Orden"
+                        : "Crear Orden"}
                     </Button>
                   </div>
                 </Form>
